@@ -1,0 +1,17 @@
+digraph {
+	D [label="Desired State (Temperatura Estable)"]
+	C [label="Current State (Aumento de Temperatura)"]
+	G [label=Gap]
+	A [label="Actions (Medidas de Mitigación)"]
+	U [label="Unintended Consequences (Impactos No Deseados)"]
+	D -> G [label=S]
+	G -> C [label=O]
+	C -> A [label=S]
+	A -> C [label=S dir=forward]
+	A -> U [label=S]
+	U -> C [label=S]
+	B [label=B shape=circle]
+	R [label=R shape=circle]
+	B -> G [style=dotted]
+	R -> U [style=dotted]
+}

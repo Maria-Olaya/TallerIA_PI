@@ -8,6 +8,14 @@ import matplotlib
 import io
 import urllib, base64
 
+import os
+import numpy as np
+from django.shortcuts import render
+from openai import OpenAI
+from dotenv import load_dotenv
+from movie.models import Movie
+
+
 def home(request):
     #return HttpResponse('<h1>Welcome to Home Page</h1>')
     #return render(request, 'home.html')
@@ -123,3 +131,56 @@ def generate_bar_chart(data, xlabel, ylabel):
     buffer.close()
     graphic = base64.b64encode(image_png).decode('utf-8')
     return graphic
+
+#-----------------------------------------------------------------------------------------------------------------
+# ✅ Cargar variables de entorno y configurar OpenAI
+load_dotenv('../api_keys.env')
+api_key = os.environ.get('openai_apikey')
+
+if not api_key:
+    raise ValueError("❌ ERROR: La API Key de OpenAI no está configurada en el archivo .env")
+
+client = OpenAI(api_key=api_key)
+
+def cosine_similarity(a, b):
+    """Calcula la similitud del coseno entre dos embeddings."""
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def get_embedding(text):
+    """Genera el embedding para un texto usando OpenAI."""
+    response = client.embeddings.create(
+        input=[text],
+        model="text-embedding-3-small"
+    )
+    return np.array(response.data[0].embedding, dtype=np.float32)
+
+def recommend_movie(request):
+    best_movie = None
+    max_similarity = -1
+
+    if request.method == "POST":
+        prompt = request.POST.get("prompt")
+
+        if not prompt:
+            return render(request, "recommendation.html", {"error": "Debe ingresar un prompt válido."})
+
+        # ✅ Generar embedding del prompt
+        prompt_emb = get_embedding(prompt)
+
+        # ✅ Recorrer la base de datos y comparar
+        for movie in Movie.objects.all():
+            if movie.emb:  # Verificar que la película tiene un embedding almacenado
+                movie_emb = np.frombuffer(movie.emb, dtype=np.float32)
+                similarity = cosine_similarity(prompt_emb, movie_emb)
+
+                if similarity > max_similarity:
+                    max_similarity = similarity
+                    best_movie = movie
+
+        # ✅ Renderizar la página con la mejor recomendación
+        return render(request, "recommendation.html", {
+            "best_movie": best_movie,
+            "similarity": max_similarity
+        })
+
+    return render(request, "recommendation.html")

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Recomendación de Películas</h2>
+  
+  <form method="post">
+    {% csrf_token %}
+    <input type="text" name="prompt" placeholder="Describe la película que buscas" required>
+    <button type="submit">Buscar</button>
+  </form>
+
+  {% if best_movie %}
+    <h3>Película Recomendada:</h3>
+    <p><strong>Título:</strong> {{ best_movie.title }}</p>
+    <p><strong>Descripción:</strong> {{ best_movie.description }}</p>
+    <p><strong>Género:</strong> {{ best_movie.genre }}</p>
+    <img src="{{ best_movie.image.url }}" alt="{{ best_movie.title }}" width="200">
+  {% endif %}
+{% endblock %}
