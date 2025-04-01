@@ -19,7 +19,8 @@ class Command(BaseCommand):
 
         # 📖 Recorrer todas las películas en la base de datos
         for movie in Movie.objects.all():
-            expected_filename = f"m_{movie.title}.png"  # Formato esperado
+            sanitized_title = movie.title.replace(":", "").strip()  # Eliminar los ":"
+            expected_filename = f"m_{sanitized_title}.png"  # Formato esperado
 
             if expected_filename in files_in_folder:
                 image_path = f"movie/images/{expected_filename}"  # Ruta relativa a MEDIA_ROOT
@@ -28,7 +29,7 @@ class Command(BaseCommand):
                 updated_count += 1
                 self.stdout.write(self.style.SUCCESS(f"Updated image for: {movie.title}"))
             else:
-                self.stderr.write(self.style.WARNING(f"Image not found for: {movie.title}"))
+                self.stderr.write(self.style.WARNING(f"Image not found for: {movie.title} (Expected: {expected_filename})"))
 
         # ✅ Resumen final
         self.stdout.write(self.style.SUCCESS(f"Finished updating {updated_count} movie images."))
